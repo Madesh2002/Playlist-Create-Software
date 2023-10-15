@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>M3U Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+
+        h2 {
+            text-align: center;
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+
+        form {
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="url"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        button[type="button"] {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button[type="button"]:hover {
+            background-color: #0056b3;
+        }
+
+        #generateM3U {
+             background-color: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        #generateM3U:hover {
+            background-color: #1e993d;
+        }
+
+        a#downloadLink {
+            background-color: #333;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 3px;
+            text-decoration: none;
+            display: none;
+        }
+
+        a#downloadLink:hover {
+            background-color: #111;
+        }
+    </style>
+</head>
+<body>
+    <h2>M3U Generator</h2>
+
+    <form id="channelForm">
+        <label for="channelGroup">Channel Group:</label>
+        <input type="text" id="channelGroup" required><br>
+
+        <label for="channelName">Channel Name:</label>
+        <input type="text" id="channelName" required><br>
+
+        <label for="channelLogoUrl">Channel Logo URL:</label>
+        <input type="url" id="channelLogoUrl" required><br>
+
+        <label for="channelUrl">Channel URL:</label>
+        <input type="url" id="channelUrl" required><br>
+
+        <button type="button" id="addChannel" disabled>Add</button>
+    </form>
+
+    <div id="channelList">
+        <!-- Existing channel list will be displayed here -->
+    </div>
+
+    <button id="generateM3U" disabled>Generate M3U</button>
+
+    <a id="downloadLink" style="display: none" download="channels.m3u">Download M3U</a>
+
+    <script>
+        const channels = [];
+
+        function displayChannels() {
+            const channelList = document.getElementById("channelList");
+            channelList.innerHTML = "";
+            channels.forEach(channel => {
+                const channelDiv = document.createElement("div");
+                channelDiv.innerHTML = `
+                    <p><strong>Group:</strong> ${channel.group}</p>
+                    <p><strong>Name:</strong> ${channel.name}</p>
+                    <p><strong>Logo:</strong> <img src="${channel.logoUrl}" alt="Channel Logo" style="max-width: 100px;"></p>
+                    <p><strong>URL:</strong> ${channel.url}</p>
+                `;
+                channelList.appendChild(channelDiv);
+            });
+
+            // Enable the Generate M3U button after displaying the channel list
+            document.getElementById("generateM3U").disabled = false;
+        }
+
+        // Enable the "Add" button when all required fields are filled
+        const requiredInputs = document.querySelectorAll("#channelForm input[required]");
+        requiredInputs.forEach(input => {
+            input.addEventListener("input", function() {
+                const isFormValid = Array.from(requiredInputs).every(input => input.value.trim() !== "");
+                document.getElementById("addChannel").disabled = !isFormValid;
+            });
+        });
+
+        document.getElementById("addChannel").addEventListener("click", function() {
+            const channelGroup = document.getElementById("channelGroup").value;
+            const channelName = document.getElementById("channelName").value;
+            const channelLogoUrl = document.getElementById("channelLogoUrl").value;
+            const channelUrl = document.getElementById("channelUrl").value;
+
+            channels.push({ group: channelGroup, name: channelName, logoUrl: channelLogoUrl, url: channelUrl });
+
+            document.getElementById("channelForm").reset();
+            displayChannels();
+        });
+
+        document.getElementById("generateM3U").addEventListener("click", function() {
+            const confirmation = confirm("Do you want to add more channels before generating the M3U file?");
+            if (confirmation) {
+                // User wants to add more channels, do nothing.
+            } else {
+                const m3uContent = channels.map(channel => {
+                    return `#EXTINF:-1 group="${channel.group}" tvg-logo="${channel.logoUrl}",${channel.name}\n${channel.url}`;
+                }).join("\n");
+
+                const blob = new Blob([m3uContent], { type: "application/octet-stream" });
+                const url = URL.createObjectURL(blob);
+
+                const downloadLink = document.getElementById("downloadLink");
+                downloadLink.href = url;
+                downloadLink.style.display = "block";
+            }
+        });
+    </script>
+</body>
+</html>
